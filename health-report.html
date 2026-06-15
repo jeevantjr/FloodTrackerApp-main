@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0055a5" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="images/flood-icon.png" />
+  <title>Report Health Alert | FedWatch</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #0055a5; --red: #c0392b;
+      --bg: #f0f5fb; --card: #fff;
+      --text: #1a2a3a; --muted: #5a6a7a;
+      --border: #d0dce8; --shadow: 0 2px 16px rgba(0,60,130,0.10);
+      --radius: 12px;
+    }
+    body { font-family: 'Inter', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    header {
+      background: linear-gradient(135deg, #003d82 0%, #0077cc 100%);
+      color: #fff; padding: 0.9rem 2rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; }
+    nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    nav a {
+      color: #fff; text-decoration: none; font-weight: 600; font-size: 0.88rem;
+      background: rgba(255,255,255,0.15); padding: 0.45em 1em; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1); transition: background 0.2s, transform 0.1s;
+    }
+    nav a:hover { background: rgba(255,255,255,0.28); transform: translateY(-1px); }
+
+    .form-page-header {
+      background: linear-gradient(135deg, #fde8e8, #fff5f5);
+      padding: 2rem 2rem 1.5rem; text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-page-header .category-icon { font-size: 2.8rem; margin-bottom: 0.5rem; }
+    .form-page-header h2 { font-size: 1.6rem; font-weight: 800; color: var(--red); margin-bottom: 0.4rem; }
+    .form-page-header p { font-size: 0.9rem; color: var(--muted); max-width: 480px; margin: 0 auto; }
+
+    main { flex: 1; display: flex; justify-content: center; padding: 2rem 1rem; }
+
+    .form-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: var(--shadow); border: 1px solid var(--border);
+      padding: 2rem; width: 100%; max-width: 640px;
+    }
+
+    .form-group { margin-bottom: 1.25rem; }
+    label { display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text); }
+    label .req { color: var(--red); margin-left: 2px; }
+    input, select, textarea {
+      width: 100%; padding: 0.75rem 1rem;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.95rem; font-family: inherit; color: var(--text);
+      background: #fff; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.10);
+    }
+    textarea { resize: vertical; min-height: 110px; }
+    .char-counter { text-align: right; font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+    .hint { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; }
+
+    .urgency-group { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.6rem; }
+    .urgency-option { display: none; }
+    .urgency-label {
+      display: block; text-align: center; padding: 0.6rem 0.4rem;
+      border: 2px solid var(--border); border-radius: 8px;
+      cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.15s;
+    }
+    .urg-low  .urgency-label { color: #1b8a4e; }
+    .urg-med  .urgency-label { color: #d4730a; }
+    .urg-high .urgency-label { color: #c0392b; }
+    .urg-low  .urgency-option:checked + .urgency-label { background: #e8f5e9; border-color: #1b8a4e; }
+    .urg-med  .urgency-option:checked + .urgency-label { background: #fff3e0; border-color: #d4730a; }
+    .urg-high .urgency-option:checked + .urgency-label { background: #fde8e8; border-color: #c0392b; }
+
+    .btn-submit {
+      width: 100%; background: linear-gradient(135deg, #a01e1e, var(--red));
+      color: #fff; border: none; padding: 1rem; border-radius: 50px;
+      font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit;
+      box-shadow: 0 4px 14px rgba(192,57,43,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(192,57,43,0.45); }
+
+    .success-msg { display: none; text-align: center; padding: 2rem 1rem; }
+    .success-msg .check { font-size: 3.5rem; margin-bottom: 0.75rem; }
+    .success-msg h3 { font-size: 1.3rem; font-weight: 700; color: #1b8a4e; margin-bottom: 0.5rem; }
+    .success-msg p { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.2rem; }
+    .btn-back {
+      background: var(--bg); border: 1.5px solid var(--border);
+      padding: 0.65rem 1.5rem; border-radius: 50px;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: inherit;
+      color: var(--text); text-decoration: none; display: inline-block;
+      transition: background 0.15s;
+    }
+    .btn-back:hover { background: var(--border); }
+
+    .emergency-banner {
+      background: #fde8e8; border: 1px solid #f5c6c6; border-radius: 8px;
+      padding: 0.75rem 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #7a1010;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    footer {
+      text-align: center; font-size: 0.82rem;
+      padding: 1.5rem 1rem; border-top: 1px solid var(--border);
+      background: #fff; color: var(--muted);
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">🩺 FedWatch</div>
+    <nav aria-label="Main navigation">
+      <a href="index.html">🏠 Home</a>
+      <a href="flood-report.html">🌊 Flood</a>
+      <a href="education-report.html">🏫 Education</a>
+      <a href="dashboard.html">📊 Dashboard</a>
+    </nav>
+  </header>
+
+  <div class="form-page-header">
+    <div class="category-icon">🩺</div>
+    <h2>Report a Public Health Alert</h2>
+    <p>Report disease outbreaks, medical supply shortages, or urgent health needs so responders can act quickly.</p>
+  </div>
+
+  <main>
+    <div class="form-card">
+
+      <div class="emergency-banner">
+        🚨 <strong>Medical emergency?</strong> Contact your local emergency services or hospital directly — do not rely on this form alone.
+      </div>
+
+      <form id="healthForm" novalidate>
+
+        <div class="form-group">
+          <label for="location">Location / Facility <span class="req">*</span></label>
+          <input type="text" id="location" name="location" placeholder="e.g. City, clinic name, or district" required />
+        </div>
+
+        <div class="form-group">
+          <label>Urgency Level <span class="req">*</span></label>
+          <div class="urgency-group">
+            <label class="urg-low">
+              <input type="radio" name="urgency" value="low" class="urgency-option" required />
+              <span class="urgency-label">🟢 Routine</span>
+            </label>
+            <label class="urg-med">
+              <input type="radio" name="urgency" value="medium" class="urgency-option" />
+              <span class="urgency-label">🟡 Urgent</span>
+            </label>
+            <label class="urg-high">
+              <input type="radio" name="urgency" value="high" class="urgency-option" />
+              <span class="urgency-label">🔴 Critical</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="type">Type of Alert <span class="req">*</span></label>
+          <select id="type" name="type" required>
+            <option value="" disabled selected>Select one</option>
+            <option value="Outbreak">Disease Outbreak</option>
+            <option value="Shortage">Medical Supply Shortage</option>
+            <option value="Injury">Mass Injury Event</option>
+            <option value="Contamination">Water / Food Contamination</option>
+            <option value="Transport">Patient Transport Needed</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="affected">Estimated People Affected</label>
+          <input type="number" id="affected" name="affected" placeholder="e.g. 50" min="1" />
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description <span class="req">*</span></label>
+          <textarea id="description" name="description" maxlength="500" placeholder="Describe the situation — symptoms, resources needed, or other relevant details." required></textarea>
+          <div class="char-counter"><span id="descCount">0</span> / 500</div>
+        </div>
+
+        <div class="form-group">
+          <label for="contact">Contact <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+          <input type="text" id="contact" name="contact" placeholder="Email or phone — only shared with responders" />
+          <p class="hint">Your contact is never shown publicly.</p>
+        </div>
+
+        <button type="submit" class="btn-submit">Submit Health Alert</button>
+      </form>
+
+      <div class="success-msg" id="successMsg">
+        <div class="check">✅</div>
+        <h3>Alert Submitted!</h3>
+        <p>Your health alert has been recorded. Thank you for helping keep your community safe. If this is a critical emergency, please also contact local authorities directly.</p>
+        <a href="dashboard.html" class="btn-back">View Dashboard</a>
+        &nbsp;
+        <a href="index.html" class="btn-back">Back to Home</a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 <strong>FedWatch</strong> — Community Resilience Tracker &nbsp;·&nbsp; Sri Lanka</p>
+    <p style="margin-top:0.4rem; font-size:0.82rem;">
+      Built by <a href="https://drjeevaraj.com" target="_blank" rel="noopener"><strong>Dr. T. Jeevaraj</strong></a>
+      &nbsp;·&nbsp; MBBS, MCGP, MSc Biomedical Informatics &nbsp;·&nbsp; MD Health Informatics Trainee
+    </p>
+    <p style="margin-top:0.3rem; font-size:0.8rem; color: #8a9ab0;">
+      For community reporting only. For emergencies, contact local authorities directly.
+    </p>
+    <p style="margin-top:0.4rem; font-size:0.82rem;">
+      <a href="index.html">Home</a> &nbsp;·&nbsp;
+      <a href="privacy.html">Privacy Policy</a> &nbsp;·&nbsp;
+      <a href="terms.html">Terms of Use</a> &nbsp;·&nbsp;
+      <a href="https://drjeevaraj.com" target="_blank" rel="noopener">drjeevaraj.com</a>
+    </p>
+  </footer>
+
+  <script>
+    var desc = document.getElementById('description');
+    var counter = document.getElementById('descCount');
+    desc.addEventListener('input', function() { counter.textContent = this.value.length; });
+
+    document.getElementById('healthForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (!this.checkValidity()) { this.reportValidity(); return; }
+      this.style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    });
+  </script>
+</body>
+</html>

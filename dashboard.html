@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0055a5" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="images/flood-icon.png" />
+  <title>FedWatch: Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:    #0055a5;
+      --blue-lt: #e8f2ff;
+      --teal:    #0097a7;
+      --green:   #1b8a4e;
+      --red:     #c0392b;
+      --purple:  #7b2d8b;
+      --orange:  #e67e22;
+      --bg:      #f0f5fb;
+      --card:    #ffffff;
+      --text:    #1a2a3a;
+      --muted:   #5a6a7a;
+      --border:  #d0dce8;
+      --shadow:  0 2px 12px rgba(0,60,130,0.10);
+      --radius:  12px;
+    }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #003d82 0%, #0077cc 100%);
+      color: #fff;
+      padding: 0.9rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.88rem;
+      background-color: rgba(255,255,255,0.15);
+      padding: 0.45em 1em;
+      border-radius: 6px;
+      transition: background-color 0.2s, transform 0.1s;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    nav a:hover { background-color: rgba(255,255,255,0.28); transform: translateY(-1px); }
+
+    /* ── MAIN ── */
+    main {
+      flex: 1;
+      padding: 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .page-header h2 {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--blue);
+      letter-spacing: -0.5px;
+    }
+    .page-header p {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .last-updated {
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.35rem 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .live-dot {
+      width: 7px; height: 7px;
+      background: #27ae60;
+      border-radius: 50%;
+      animation: pulse 1.8s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(1.5); }
+    }
+
+    /* ── STAT CARDS ── */
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 1.2rem 1.4rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+    }
+    .stat-card.flood   { border-left-color: var(--teal); }
+    .stat-card.health  { border-left-color: var(--red); }
+    .stat-card.edu     { border-left-color: var(--purple); }
+    .stat-card.total   { border-left-color: var(--blue); }
+    .stat-card-number {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+    .stat-card.flood  .stat-card-number { color: var(--teal); }
+    .stat-card.health .stat-card-number { color: var(--red); }
+    .stat-card.edu    .stat-card-number { color: var(--purple); }
+    .stat-card.total  .stat-card-number { color: var(--blue); }
+    .stat-card-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-card-icon { font-size: 1.4rem; margin-bottom: 0.5rem; }
+
+    /* ── FILTER TABS ── */
+    .filter-tabs {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 0.4rem 1.1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .tab-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .tab-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+    /* ── SECTION ── */
+    .section {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 1rem 1.4rem;
+      border-bottom: 1px solid var(--border);
+      background: #fafcff;
+    }
+    .section-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      flex: 1;
+    }
+    .section-header .count-badge {
+      background: var(--blue-lt);
+      color: var(--blue);
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 50px;
+      padding: 0.15rem 0.6rem;
+    }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      background: var(--bg);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 0.8rem 1rem;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #eef2f7;
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafd; }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-block;
+      border-radius: 50px;
+      padding: 0.2rem 0.65rem;
+      font-size: 0.73rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .badge-high    { background: #fde8e8; color: #a01e1e; }
+    .badge-medium  { background: #fff3e0; color: #7a4500; }
+    .badge-low     { background: #e8f5e9; color: #1b5e20; }
+    .badge-active  { background: #fde8e8; color: #a01e1e; }
+    .badge-monitor { background: #fff3e0; color: #7a4500; }
+    .badge-resolved{ background: #e8f5e9; color: #1b5e20; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      padding: 1.5rem 1rem;
+      border-top: 1px solid var(--border);
+      background: #fff;
+      color: var(--muted);
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      main { padding: 1rem; }
+      .page-header h2 { font-size: 1.3rem; }
+      td, th { padding: 0.6rem 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">📊 FedWatch</div>
+    <nav aria-label="Main navigation">
+      <a href="index.html">🏠 Home</a>
+      <a href="flood-report.html">🌊 Flood</a>
+      <a href="health-report.html">🩺 Health</a>
+      <a href="education-report.html">🏫 Education</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="page-header">
+      <div>
+        <h2>Community Reports Dashboard</h2>
+        <p>An overview of recent community-submitted reports across all domains.</p>
+      </div>
+      <div class="last-updated">
+        <div class="live-dot"></div>
+        Updated just now
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stat-cards">
+      <div class="stat-card total">
+        <div class="stat-card-icon">📋</div>
+        <div class="stat-card-number">47</div>
+        <div class="stat-card-label">Total Reports</div>
+      </div>
+      <div class="stat-card flood">
+        <div class="stat-card-icon">🌊</div>
+        <div class="stat-card-number">24</div>
+        <div class="stat-card-label">Flood Reports</div>
+      </div>
+      <div class="stat-card health">
+        <div class="stat-card-icon">🩺</div>
+        <div class="stat-card-number">15</div>
+        <div class="stat-card-label">Health Alerts</div>
+      </div>
+      <div class="stat-card edu">
+        <div class="stat-card-icon">🏫</div>
+        <div class="stat-card-number">8</div>
+        <div class="stat-card-label">Education Alerts</div>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs" role="tablist" aria-label="Filter reports">
+      <button class="tab-btn active" data-filter="all"   onclick="filterReports('all')">All Reports</button>
+      <button class="tab-btn"        data-filter="flood"  onclick="filterReports('flood')">🌊 Floods</button>
+      <button class="tab-btn"        data-filter="health" onclick="filterReports('health')">🩺 Health</button>
+      <button class="tab-btn"        data-filter="edu"    onclick="filterReports('edu')">🏫 Education</button>
+    </div>
+
+    <!-- Flood Reports -->
+    <div class="section" data-section="flood">
+      <div class="section-header">
+        <span>🌊</span>
+        <h3>Flood Reports</h3>
+        <span class="count-badge">4 reports</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Location</th>
+              <th>Severity</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Reported</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Northern River Basin</strong></td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>River overflow near main bridge — roads impassable.</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>2026-06-06</td>
+            </tr>
+            <tr>
+              <td><strong>Trincomalee</strong></td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>Low-lying areas submerged after heavy rains.</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>2026-06-05</td>
+            </tr>
+            <tr>
+              <td><strong>Kurunegala</strong></td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>Minor waterlogging near town center.</td>
+              <td><span class="badge badge-monitor">Monitoring</span></td>
+              <td>2026-06-04</td>
+            </tr>
+            <tr>
+              <td><strong>Colombo Metro</strong></td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>Kelani River nearing danger level.</td>
+              <td><span class="badge badge-monitor">Monitoring</span></td>
+              <td>2026-06-03</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Health Alerts -->
+    <div class="section" data-section="health">
+      <div class="section-header">
+        <span>🩺</span>
+        <h3>Health Alerts</h3>
+        <span class="count-badge">4 reports</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Location</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Reported</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Northside Clinic</strong></td>
+              <td>Disease Outbreak</td>
+              <td>Influenza-like illness cluster detected.</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>2026-06-06</td>
+            </tr>
+            <tr>
+              <td><strong>East District Hospital</strong></td>
+              <td>Shortage</td>
+              <td>Limited stock of IV fluids and saline.</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>2026-06-05</td>
+            </tr>
+            <tr>
+              <td><strong>Bayview PHC</strong></td>
+              <td>Contamination</td>
+              <td>Suspected gastroenteritis — water supply flagged.</td>
+              <td><span class="badge badge-monitor">Monitoring</span></td>
+              <td>2026-06-04</td>
+            </tr>
+            <tr>
+              <td><strong>Rural Mobile Unit</strong></td>
+              <td>Medical Alert</td>
+              <td>Urgent transport needed for isolated patient.</td>
+              <td><span class="badge badge-resolved">Resolved</span></td>
+              <td>2026-06-03</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Education & Safety -->
+    <div class="section" data-section="edu">
+      <div class="section-header">
+        <span>🏫</span>
+        <h3>Education &amp; Public Safety</h3>
+        <span class="count-badge">4 reports</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Location</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Reported</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Central High School</strong></td>
+              <td>Closure</td>
+              <td>School closed due to power outage.</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>2026-06-06</td>
+            </tr>
+            <tr>
+              <td><strong>West Primary School</strong></td>
+              <td>Road Block</td>
+              <td>Access blocked — fallen tree on main road.</td>
+              <td><span class="badge badge-resolved">Resolved</span></td>
+              <td>2026-06-05</td>
+            </tr>
+            <tr>
+              <td><strong>North Valley School</strong></td>
+              <td>Closure</td>
+              <td>Flooding near entrance gate.</td>
+              <td><span class="badge badge-active">Active</span></td>
+              <td>2026-06-04</td>
+            </tr>
+            <tr>
+              <td><strong>Eastern Kindergarten</strong></td>
+              <td>Safety Alert</td>
+              <td>Broken fence reported near playground.</td>
+              <td><span class="badge badge-monitor">Monitoring</span></td>
+              <td>2026-06-03</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>© 2026 <strong>FedWatch</strong> — Community Resilience Tracker &nbsp;·&nbsp; Sri Lanka</p>
+    <p style="margin-top:0.4rem; font-size:0.82rem;">
+      Built by <a href="https://drjeevaraj.com" target="_blank" rel="noopener"><strong>Dr. T. Jeevaraj</strong></a>
+      &nbsp;·&nbsp; MBBS, MCGP, MSc Biomedical Informatics &nbsp;·&nbsp; MD Health Informatics Trainee
+    </p>
+    <p style="margin-top:0.3rem; font-size:0.8rem; color: #8a9ab0;">
+      For official data, consult your local emergency agencies.
+    </p>
+    <p style="margin-top:0.4rem; font-size:0.82rem;">
+      <a href="index.html">Home</a> &nbsp;·&nbsp;
+      <a href="privacy.html">Privacy</a> &nbsp;·&nbsp;
+      <a href="terms.html">Terms</a> &nbsp;·&nbsp;
+      <a href="https://drjeevaraj.com/cv.html" target="_blank" rel="noopener">Developer CV</a> &nbsp;·&nbsp;
+      <a href="https://drjeevaraj.com" target="_blank" rel="noopener">drjeevaraj.com</a>
+    </p>
+  </footer>
+
+  <script>
+    function filterReports(filter) {
+      // Update tab active state
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+      });
+      // Show/hide sections
+      document.querySelectorAll('.section[data-section]').forEach(function(sec) {
+        if (filter === 'all' || sec.dataset.section === filter) {
+          sec.style.display = '';
+        } else {
+          sec.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

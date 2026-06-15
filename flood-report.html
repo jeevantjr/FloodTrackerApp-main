@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0055a5" />
+  <meta name="description" content="Submit a community flood report to help local planners respond to emergencies." />
+  <link rel="icon" href="images/flood-icon.png" />
+  <title>Submit Flood Report | FedWatch</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #0055a5; --teal: #0097a7;
+      --bg: #f0f5fb; --card: #fff;
+      --text: #1a2a3a; --muted: #5a6a7a;
+      --border: #d0dce8; --shadow: 0 2px 16px rgba(0,60,130,0.10);
+      --radius: 12px;
+    }
+    body { font-family: 'Inter', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+    header {
+      background: linear-gradient(135deg, #003d82 0%, #0077cc 100%);
+      color: #fff; padding: 0.9rem 2rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .logo { font-size: 1.35rem; font-weight: 800; }
+    nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    nav a {
+      color: #fff; text-decoration: none; font-weight: 600; font-size: 0.88rem;
+      background: rgba(255,255,255,0.15); padding: 0.45em 1em; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1); transition: background 0.2s, transform 0.1s;
+    }
+    nav a:hover { background: rgba(255,255,255,0.28); transform: translateY(-1px); }
+
+    .form-page-header {
+      background: linear-gradient(135deg, #e0f4f7, #f0f9ff);
+      padding: 2rem 2rem 1.5rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-page-header .category-icon { font-size: 2.8rem; margin-bottom: 0.5rem; }
+    .form-page-header h2 { font-size: 1.6rem; font-weight: 800; color: var(--teal); margin-bottom: 0.4rem; }
+    .form-page-header p { font-size: 0.9rem; color: var(--muted); max-width: 480px; margin: 0 auto; }
+
+    main { flex: 1; display: flex; justify-content: center; padding: 2rem 1rem; }
+
+    .form-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 2rem;
+      width: 100%; max-width: 640px;
+    }
+
+    .form-group { margin-bottom: 1.25rem; }
+    label { display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; color: var(--text); }
+    label .req { color: #c0392b; margin-left: 2px; }
+    input, select, textarea {
+      width: 100%; padding: 0.75rem 1rem;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.95rem; font-family: inherit; color: var(--text);
+      background: #fff; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(0,151,167,0.12);
+    }
+    textarea { resize: vertical; min-height: 110px; }
+    .char-counter { text-align: right; font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+    .severity-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+    .severity-option { display: none; }
+    .severity-label {
+      display: block; text-align: center; padding: 0.6rem 0.4rem;
+      border: 2px solid var(--border); border-radius: 8px;
+      cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all 0.15s;
+    }
+    .severity-option:checked + .severity-label { border-color: currentColor; }
+    .sev-low  .severity-label { color: #1b8a4e; }
+    .sev-med  .severity-label { color: #d4730a; }
+    .sev-high .severity-label { color: #c0392b; }
+    .sev-low  .severity-option:checked + .severity-label { background: #e8f5e9; }
+    .sev-med  .severity-option:checked + .severity-label { background: #fff3e0; }
+    .sev-high .severity-option:checked + .severity-label { background: #fde8e8; }
+
+    .hint { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; }
+
+    .btn-submit {
+      width: 100%; background: linear-gradient(135deg, #006a98, var(--teal));
+      color: #fff; border: none; padding: 1rem;
+      border-radius: 50px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      box-shadow: 0 4px 14px rgba(0,151,167,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,151,167,0.45); }
+
+    /* Success state */
+    .success-msg {
+      display: none; text-align: center; padding: 2rem 1rem;
+    }
+    .success-msg .check { font-size: 3.5rem; margin-bottom: 0.75rem; }
+    .success-msg h3 { font-size: 1.3rem; font-weight: 700; color: #1b8a4e; margin-bottom: 0.5rem; }
+    .success-msg p { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.2rem; }
+    .btn-back {
+      background: var(--bg); border: 1.5px solid var(--border);
+      padding: 0.65rem 1.5rem; border-radius: 50px;
+      font-size: 0.9rem; font-weight: 600; cursor: pointer; font-family: inherit;
+      color: var(--text); transition: background 0.15s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-back:hover { background: var(--border); }
+
+    footer {
+      text-align: center; font-size: 0.82rem;
+      padding: 1.5rem 1rem; border-top: 1px solid var(--border);
+      background: #fff; color: var(--muted);
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      nav { flex-direction: column; align-items: flex-start; }
+      .severity-group { grid-template-columns: repeat(3,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">🌊 FedWatch</div>
+    <nav aria-label="Main navigation">
+      <a href="index.html">🏠 Home</a>
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="health-report.html">🩺 Health</a>
+      <a href="education-report.html">🏫 Education</a>
+    </nav>
+  </header>
+
+  <div class="form-page-header">
+    <div class="category-icon">🌊</div>
+    <h2>Submit a Flood Report</h2>
+    <p>Help your community by reporting flood conditions. Reports are anonymous and go directly to local responders.</p>
+  </div>
+
+  <main>
+    <div class="form-card">
+
+      <!-- Form -->
+      <form id="floodForm" novalidate>
+
+        <div class="form-group">
+          <label for="location">Location / Area <span class="req">*</span></label>
+          <input type="text" id="location" name="location" placeholder="e.g. Northern district, near main bridge" required />
+        </div>
+
+        <div class="form-group">
+          <label>Severity <span class="req">*</span></label>
+          <div class="severity-group">
+            <label class="sev-low">
+              <input type="radio" name="severity" value="low" class="severity-option" required />
+              <span class="severity-label">🟢 Low</span>
+            </label>
+            <label class="sev-med">
+              <input type="radio" name="severity" value="medium" class="severity-option" />
+              <span class="severity-label">🟡 Medium</span>
+            </label>
+            <label class="sev-high">
+              <input type="radio" name="severity" value="high" class="severity-option" />
+              <span class="severity-label">🔴 High</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="waterlevel">Water Level (estimated)</label>
+          <input type="text" id="waterlevel" name="waterlevel" placeholder="e.g. 3.5 ft above road level" />
+        </div>
+
+        <div class="form-group">
+          <label for="damage">Type of Impact <span class="req">*</span></label>
+          <select id="damage" name="damage" required>
+            <option value="" disabled selected>Select one</option>
+            <option>Home / Buildings Flooded</option>
+            <option>Road Blocked or Impassable</option>
+            <option>Health Facility Affected</option>
+            <option>School / Institution Closed</option>
+            <option>Power or Water Supply Cut</option>
+            <option>Agricultural / Crop Damage</option>
+            <option>Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Additional Details</label>
+          <textarea id="description" name="description" maxlength="500" placeholder="Describe the situation — number of people affected, road names, landmarks, or other useful context."></textarea>
+          <div class="char-counter"><span id="descCount">0</span> / 500</div>
+        </div>
+
+        <div class="form-group">
+          <label for="reporter">Reporter Name <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+          <input type="text" id="reporter" name="reporter" placeholder="Anonymous or initials only" />
+          <p class="hint">Your identity is never shared publicly.</p>
+        </div>
+
+        <button type="submit" class="btn-submit">📤 Submit Flood Report</button>
+      </form>
+
+      <!-- Success State -->
+      <div class="success-msg" id="successMsg">
+        <div class="check">✅</div>
+        <h3>Report Submitted!</h3>
+        <p>Thank you for helping your community stay informed. Your report has been recorded and will help local responders prioritize their efforts.</p>
+        <a href="dashboard.html" class="btn-back">View Dashboard</a>
+        &nbsp;
+        <a href="index.html" class="btn-back">Back to Home</a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2026 <strong>FedWatch</strong> — Community Resilience Tracker &nbsp;·&nbsp; Sri Lanka</p>
+    <p style="margin-top:0.4rem; font-size:0.82rem;">
+      Built by <a href="https://drjeevaraj.com" target="_blank" rel="noopener"><strong>Dr. T. Jeevaraj</strong></a>
+      &nbsp;·&nbsp; MBBS, MCGP, MSc Biomedical Informatics &nbsp;·&nbsp; MD Health Informatics Trainee
+    </p>
+    <p style="margin-top:0.3rem; font-size:0.8rem; color: #8a9ab0;">
+      Reports are submitted anonymously and used to support community flood response.
+    </p>
+    <p style="margin-top:0.4rem; font-size:0.82rem;">
+      <a href="index.html">Home</a> &nbsp;·&nbsp;
+      <a href="privacy.html">Privacy Policy</a> &nbsp;·&nbsp;
+      <a href="terms.html">Terms of Use</a> &nbsp;·&nbsp;
+      <a href="https://drjeevaraj.com" target="_blank" rel="noopener">drjeevaraj.com</a>
+    </p>
+  </footer>
+
+  <script>
+    // Character counter
+    var desc = document.getElementById('description');
+    var counter = document.getElementById('descCount');
+    desc.addEventListener('input', function() { counter.textContent = this.value.length; });
+
+    // Form submission
+    document.getElementById('floodForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (!this.checkValidity()) { this.reportValidity(); return; }
+      this.style.display = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+    });
+  </script>
+</body>
+</html>

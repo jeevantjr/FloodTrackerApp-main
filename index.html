@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0055a5" />
+  <meta name="description" content="FedWatch — community-powered emergency reporting for floods, health alerts, and school closures." />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="images/flood-icon.png" />
+  <title>FedWatch: Community Resilience App</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:    #0055a5;
+      --blue-lt: #e8f2ff;
+      --teal:    #0097a7;
+      --green:   #1b8a4e;
+      --red:     #c0392b;
+      --orange:  #e67e22;
+      --bg:      #f0f5fb;
+      --card:    #ffffff;
+      --text:    #1a2a3a;
+      --muted:   #5a6a7a;
+      --border:  #d0dce8;
+      --shadow:  0 2px 12px rgba(0,60,130,0.10);
+      --radius:  12px;
+    }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── ALERT TICKER ── */
+    .ticker-bar {
+      background: var(--red);
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.45rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      overflow: hidden;
+    }
+    .ticker-label {
+      background: rgba(255,255,255,0.25);
+      border-radius: 4px;
+      padding: 0.1rem 0.5rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .ticker-track {
+      overflow: hidden;
+      flex: 1;
+    }
+    .ticker-inner {
+      display: inline-block;
+      white-space: nowrap;
+      animation: ticker 28s linear infinite;
+    }
+    @keyframes ticker {
+      0%   { transform: translateX(100vw); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #003d82 0%, #0077cc 100%);
+      color: #fff;
+      padding: 0.9rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-badge {
+      background: rgba(255,255,255,0.18);
+      border-radius: 6px;
+      padding: 0.15rem 0.55rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    nav {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.88rem;
+      background-color: rgba(255,255,255,0.15);
+      padding: 0.45em 1em;
+      border-radius: 6px;
+      transition: background-color 0.2s, transform 0.1s;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    nav a:hover {
+      background-color: rgba(255,255,255,0.28);
+      transform: translateY(-1px);
+    }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      background: var(--blue);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.7rem 2rem;
+      border-right: 1px solid rgba(255,255,255,0.15);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-number {
+      font-size: 1.5rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 0.72rem;
+      font-weight: 500;
+      opacity: 0.8;
+      margin-top: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(160deg, #e8f2ff 0%, #f0f9ff 50%, #e8fff5 100%);
+      padding: 3rem 2rem 2rem;
+      text-align: center;
+    }
+    .hero-icon {
+      width: 90px;
+      height: 90px;
+      object-fit: contain;
+      margin-bottom: 1.2rem;
+      filter: drop-shadow(0 4px 12px rgba(0,85,165,0.2));
+    }
+    .hero h2 {
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: var(--blue);
+      letter-spacing: -0.5px;
+      margin-bottom: 0.75rem;
+    }
+    .hero p {
+      max-width: 650px;
+      margin: 0 auto;
+      font-size: 1.05rem;
+      line-height: 1.65;
+      color: var(--muted);
+    }
+
+    /* ── DOMAIN CARDS ── */
+    .cards-section {
+      padding: 2.5rem 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+      text-align: center;
+    }
+    .domains {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+    .domain-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 1.6rem 1.4rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .domain-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,60,130,0.14);
+    }
+    .domain-card .card-icon {
+      font-size: 2.2rem;
+      margin-bottom: 0.75rem;
+    }
+    .domain-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .domain-card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+    .card-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--blue);
+    }
+    .card-flood    { border-top: 4px solid #0097a7; }
+    .card-health   { border-top: 4px solid #c0392b; }
+    .card-education{ border-top: 4px solid #7b2d8b; }
+
+    /* ── CTA BUTTON ── */
+    .cta-section {
+      text-align: center;
+      padding: 0 2rem 2rem;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #0055a5, #0077cc);
+      color: #fff;
+      padding: 0.9rem 2.4rem;
+      border: none;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 16px rgba(0,85,165,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,85,165,0.45);
+    }
+    .btn-install {
+      background: linear-gradient(135deg, #1b8a4e, #27ae60);
+      box-shadow: 0 4px 16px rgba(27,138,78,0.35);
+    }
+    .btn-install:hover {
+      box-shadow: 0 6px 20px rgba(27,138,78,0.45);
+    }
+
+    /* ── MAP ── */
+    .map-section {
+      max-width: 1100px;
+      margin: 0 auto 2rem;
+      padding: 0 2rem;
+      width: 100%;
+    }
+    .map-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+    }
+    .map-header h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--blue);
+    }
+    .live-dot {
+      width: 8px; height: 8px;
+      background: #27ae60;
+      border-radius: 50%;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(1.4); }
+    }
+    #map {
+      height: 380px;
+      width: 100%;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    .map-legend {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      margin-top: 0.6rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 0.3rem;
+    }
+
+    /* ── INSTALL CONTAINER ── */
+    #installContainer { text-align: center; padding: 1.5rem 2rem 2rem; }
+
+    /* ── ABOUT DEVELOPER ── */
+    .about-dev {
+      background: linear-gradient(135deg, #003d82 0%, #005bb5 100%);
+      color: #fff;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    .about-dev .section-label {
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 1.5rem;
+    }
+    .dev-card {
+      max-width: 720px;
+      margin: 0 auto;
+      display: flex;
+      align-items: flex-start;
+      gap: 2rem;
+      text-align: left;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 1.8rem;
+    }
+    .dev-photo {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255,255,255,0.35);
+      flex-shrink: 0;
+    }
+    .dev-info h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+    .dev-info .dev-creds {
+      font-size: 0.82rem;
+      opacity: 0.75;
+      margin-bottom: 0.75rem;
+      line-height: 1.5;
+    }
+    .dev-info p {
+      font-size: 0.88rem;
+      line-height: 1.6;
+      opacity: 0.9;
+      margin-bottom: 1rem;
+    }
+    .dev-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .dev-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50px;
+      padding: 0.3rem 0.85rem;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .dev-link:hover {
+      background: rgba(255,255,255,0.28);
+    }
+    @media (max-width: 580px) {
+      .dev-card { flex-direction: column; align-items: center; text-align: center; }
+      .dev-links { justify-content: center; }
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      margin-top: auto;
+      text-align: center;
+      font-size: 0.85rem;
+      padding: 2rem 1.5rem;
+      border-top: 1px solid var(--border);
+      background: #fff;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    .footer-links { display: flex; gap: 1.5rem; justify-content: center; margin-top: 0.5rem; flex-wrap: wrap; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      .hero h2 { font-size: 1.6rem; }
+      nav { gap: 0.4rem; }
+      .stat-item { padding: 0.6rem 1rem; }
+      .stat-number { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Alert Ticker -->
+  <div class="ticker-bar" role="marquee" aria-label="Active alerts">
+    <span class="ticker-label">⚡ LIVE</span>
+    <div class="ticker-track">
+      <span class="ticker-inner">
+        🌊 Flood advisory issued — low-lying areas near river basin &nbsp;&nbsp;|&nbsp;&nbsp;
+        🩺 Health alert: elevated respiratory illness reports in northern district &nbsp;&nbsp;|&nbsp;&nbsp;
+        🏫 School closure: 3 schools in eastern zone closed due to flooding &nbsp;&nbsp;|&nbsp;&nbsp;
+        🌊 Water levels receding — Kelani River monitoring ongoing
+      </span>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      🌐 FedWatch <span class="logo-badge">Beta</span>
+    </div>
+    <nav aria-label="Main navigation">
+      <a href="flood-report.html">🌊 Report Flood</a>
+      <a href="health-report.html">🩺 Health Alert</a>
+      <a href="education-report.html">🏫 School Closure</a>
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+    </nav>
+  </header>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar" role="region" aria-label="Community statistics">
+    <div class="stat-item">
+      <span class="stat-number" id="stat-reports">47</span>
+      <span class="stat-label">Reports Today</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number" id="stat-alerts">12</span>
+      <span class="stat-label">Active Alerts</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number" id="stat-zones">8</span>
+      <span class="stat-label">Affected Zones</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number" id="stat-communities">3,200+</span>
+      <span class="stat-label">People Informed</span>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <section class="hero">
+    <img src="images/flood-icon.png" alt="FedWatch Icon" class="hero-icon" />
+    <h2>Community Resilience Tracker</h2>
+    <p>
+      FedWatch is an offline-ready reporting and monitoring platform for tracking emergencies
+      across floods, public health, and education. Built for remote and disaster-affected areas
+      where connectivity may fail — so communities stay informed when it matters most.
+    </p>
+  </section>
+
+  <!-- Domain Cards -->
+  <section class="cards-section" aria-label="Report categories">
+    <p class="section-label">What would you like to report?</p>
+    <div class="domains">
+
+      <a href="flood-report.html" class="domain-card card-flood">
+        <div class="card-icon">🌊</div>
+        <h3>Climate: Floods</h3>
+        <p>Report river overflows, waterlogging, damage to roads, homes, or infrastructure in real time.</p>
+        <span class="card-action">Submit a Flood Report →</span>
+      </a>
+
+      <a href="health-report.html" class="domain-card card-health">
+        <div class="card-icon">🩺</div>
+        <h3>Public Health</h3>
+        <p>Track and report disease outbreaks, medical supply shortages, or urgent health needs in your area.</p>
+        <span class="card-action">Submit a Health Alert →</span>
+      </a>
+
+      <a href="education-report.html" class="domain-card card-education">
+        <div class="card-icon">🏫</div>
+        <h3>Education & Public Safety</h3>
+        <p>Report school closures, access disruptions, infrastructure failures, or public safety incidents.</p>
+        <span class="card-action">Submit an Education Alert →</span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <a href="dashboard.html" class="btn-primary">📊 View Community Dashboard</a>
+  </div>
+
+  <!-- Live Map -->
+  <section class="map-section" aria-label="Incident map">
+    <div class="map-header">
+      <div class="live-dot"></div>
+      <h3>Live Incident Map</h3>
+    </div>
+    <div id="map"></div>
+    <div class="map-legend">
+      <span><span class="legend-dot" style="background:#0097a7;"></span>Flood</span>
+      <span><span class="legend-dot" style="background:#c0392b;"></span>Health Alert</span>
+      <span><span class="legend-dot" style="background:#7b2d8b;"></span>Education / Safety</span>
+    </div>
+  </section>
+
+  <!-- Install PWA -->
+  <div id="installContainer" style="display:none;">
+    <button id="installBtn" class="btn-primary btn-install">📲 Install FedWatch App</button>
+  </div>
+
+  <!-- About the Developer -->
+  <section class="about-dev" aria-label="About the developer">
+    <p class="section-label">DEVELOPED BY</p>
+    <div class="dev-card">
+      <img
+        src="https://drjeevaraj.com/T. Jeevaraj.jpg"
+        alt="Dr. T. Jeevaraj"
+        class="dev-photo"
+        onerror="this.style.display='none'"
+      />
+      <div class="dev-info">
+        <h3>Dr. Thangarasa Jeevaraaj</h3>
+        <p class="dev-creds">MBBS · MCGP · MSc Biomedical Informatics · MD Trainee, Health Informatics<br>PGIM, University of Colombo · Sri Lanka</p>
+        <p>
+          Medical doctor and health informatician building digital tools for communities across Sri Lanka — disease surveillance, emergency dashboards, and offline-first field apps. This project was developed from first-hand experience responding to disasters in the Eastern Province.
+        </p>
+        <div class="dev-links">
+          <a href="https://drjeevaraj.com" target="_blank" rel="noopener" class="dev-link">🌐 Website</a>
+          <a href="https://drjeevaraj.com/cv.html" target="_blank" rel="noopener" class="dev-link">📄 CV</a>
+          <a href="https://drjeevaraj.com/dev.html" target="_blank" rel="noopener" class="dev-link">💻 Dev Portfolio</a>
+          <a href="https://www.linkedin.com/in/geevanathy/" target="_blank" rel="noopener" class="dev-link">🔗 LinkedIn</a>
+          <a href="https://x.com/drjeevaraj" target="_blank" rel="noopener" class="dev-link">🐦 X / Twitter</a>
+          <a href="https://www.amazon.com/dp/B0H333G41P" target="_blank" rel="noopener" class="dev-link">📚 Book</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2026 <strong>FedWatch</strong> — Community Resilience Tracker &nbsp;·&nbsp; Sri Lanka</p>
+    <p style="font-size:0.82rem; margin-top:0.4rem;">
+      Built by <a href="https://drjeevaraj.com" target="_blank" rel="noopener"><strong>Dr. T. Jeevaraj</strong></a>
+      &nbsp;·&nbsp; MBBS, MCGP, MSc Biomedical Informatics &nbsp;·&nbsp; MD Health Informatics Trainee
+    </p>
+    <p style="font-size:0.78rem; margin-top:0.4rem; color: #8a9ab0;">
+      Public prototype for humanitarian use. Data shown may include simulated entries.
+      For official emergency information, consult your local authorities.
+    </p>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms of Use</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="https://drjeevaraj.com/cv.html" target="_blank" rel="noopener">Developer CV</a>
+      <a href="https://drjeevaraj.com" target="_blank" rel="noopener">drjeevaraj.com</a>
+    </div>
+  </footer>
+
+  <script>
+    // ── Leaflet Map ──
+    var map = L.map('map', { zoomControl: true }).setView([7.8731, 80.7718], 7);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 18
+    }).addTo(map);
+
+    function colorIcon(color) {
+      return L.divIcon({
+        className: '',
+        html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`,
+        iconSize: [14, 14], iconAnchor: [7, 7]
+      });
+    }
+
+    var incidents = [
+      { lat: 7.3, lng: 81.6,  color: '#0097a7', title: 'Flood Report',    body: 'Moderate flooding — Trincomalee area.' },
+      { lat: 6.9, lng: 79.85, color: '#0097a7', title: 'Flood Report',    body: 'Kelani River nearing danger level.' },
+      { lat: 8.35,lng: 80.5,  color: '#c0392b', title: 'Health Alert',    body: 'Influenza-like illness cluster — Anuradhapura.' },
+      { lat: 7.86,lng: 80.65, color: '#7b2d8b', title: 'School Closure',  body: '2 schools closed due to power outage.' },
+      { lat: 6.05,lng: 80.22, color: '#0097a7', title: 'Flood Report',    body: 'Minor waterlogging — Matara coastal area.' }
+    ];
+
+    incidents.forEach(function(i) {
+      L.marker([i.lat, i.lng], { icon: colorIcon(i.color) })
+        .addTo(map)
+        .bindPopup('<b>' + i.title + '</b><br>' + i.body);
+    });
+
+    // ── PWA Install ──
+    var deferredPrompt;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('installContainer').style.display = 'block';
+    });
+    document.getElementById('installBtn') && document.getElementById('installBtn').addEventListener('click', function() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
+      }
+    });
+  </script>
+</body>
+</html>

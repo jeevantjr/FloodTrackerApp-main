@@ -1,0 +1,25 @@
+{
+  "name": "FloodTrackerApp — Community Resilience Tracker",
+  "short_name": "FloodTracker",
+  "description": "Offline-first PWA for community flood reporting, health alerts, and education disruptions. Built for field use in disaster-affected areas. Developed by Dr. T. Jeevaraj — drjeevaraj.com",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f0f5fb",
+  "theme_color": "#0055a5",
+  "orientation": "portrait",
+  "lang": "en-US",
+  "categories": ["utilities", "health", "social"],
+  "icons": [
+    {
+      "src": "images/flood-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/flood-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
